@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import useForm from '../hooks/useForm';
 import SummaryComponent from './SummaryComponent';
-
+import axios from "axios"
 const FormComponent = () => {
   const validate = (values) => {
     let errors = {};
@@ -16,34 +16,35 @@ const FormComponent = () => {
       errors.email = 'Email address is invalid';
     }
 
-    if (!values.phoneNumber) {
-      errors.phoneNumber = 'Phone Number is required';
-    } else if (!/^\d{10}$/.test(values.phoneNumber)) {
-      errors.phoneNumber = 'Phone Number must be exactly 10 digits';
+    if (!values.surveyTopic) {
+      errors.surveyTopic = 'Survey Topic is required';
     }
 
-    if ((values.position === 'Developer' || values.position === 'Designer') && !values.relevantExperience) {
-      errors.relevantExperience = 'Relevant Experience is required';
-    } else if (values.relevantExperience <= 0) {
-      errors.relevantExperience = 'Relevant Experience must be greater than 0';
+    if (values.surveyTopic === 'Technology') {
+      if (!values.favoriteProgrammingLanguage) {
+        errors.favoriteProgrammingLanguage = 'Favorite Programming Language is required';
+      }
+      if (!values.yearsOfExperience) {
+        errors.yearsOfExperience = 'Years of Experience is required';
+      }
+    } else if (values.surveyTopic === 'Health') {
+      if (!values.exerciseFrequency) {
+        errors.exerciseFrequency = 'Exercise Frequency is required';
+      }
+      if (!values.dietPreference) {
+        errors.dietPreference = 'Diet Preference is required';
+      }
+    } else if (values.surveyTopic === 'Education') {
+      if (!values.highestQualification) {
+        errors.highestQualification = 'Highest Qualification is required';
+      }
+      if (!values.fieldOfStudy) {
+        errors.fieldOfStudy = 'Field of Study is required';
+      }
     }
 
-    if (values.position === 'Designer' && !values.portfolioURL) {
-      errors.portfolioURL = 'Portfolio URL is required';
-    } else if (values.portfolioURL && !/^https?:\/\/\S+$/.test(values.portfolioURL)) {
-      errors.portfolioURL = 'Portfolio URL must be a valid URL';
-    }
-
-    if (values.position === 'Manager' && !values.managementExperience) {
-      errors.managementExperience = 'Management Experience is required';
-    }
-
-    if (!values.skills || values.skills.length === 0) {
-      errors.skills = 'At least one skill must be selected';
-    }
-
-    if (!values.interviewTime) {
-      errors.interviewTime = 'Preferred Interview Time is required';
+    if (!values.feedback || values.feedback.length < 50) {
+      errors.feedback = 'Feedback is required and must be at least 50 characters';
     }
 
     return errors;
@@ -53,33 +54,59 @@ const FormComponent = () => {
     {
       fullName: '',
       email: '',
-      phoneNumber: '',
-      position: '',
-      relevantExperience: '',
-      portfolioURL: '',
-      managementExperience: '',
-      skills: [],
-      interviewTime: '',
+      surveyTopic: '',
+      favoriteProgrammingLanguage: '',
+      yearsOfExperience: '',
+      exerciseFrequency: '',
+      dietPreference: '',
+      highestQualification: '',
+      fieldOfStudy: '',
+      feedback: '',
     },
     validate
   );
 
   const [submittedData, setSubmittedData] = useState(null);
+  const [additionalQuestions, setAdditionalQuestions] = useState(null);
+
+  const fetchAdditionalQuestions = async () => {
+    // Mock API call for additional questions
+    const options = {
+      method: 'GET',
+      url: 'https://us-doctors-and-medical-professionals.p.rapidapi.com/search_npi',
+      params: {npi: '1033112214'},
+      headers: {
+        'x-rapidapi-key': '075c7e168cmshe5622bc451e355ap1041f4jsn4c5b4f4bde54',
+        'x-rapidapi-host': 'us-doctors-and-medical-professionals.p.rapidapi.com'
+      }
+    };
+    
+    try {
+      const response = await axios.request(options);
+      setAdditionalQuestions(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+   
+  };
 
   const onSubmit = (e) => {
-    if (handleSubmit(e)) {
-      setSubmittedData(values);
-    }
+    handleSubmit(e, () => {
+      fetchAdditionalQuestions().then(() => {
+        setSubmittedData(values);
+      });
+    });
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       {submittedData ? (
-        <SummaryComponent data={submittedData} />
+        <SummaryComponent data={submittedData} additionalQuestions={additionalQuestions} />
       ) : (
         <div className="w-full max-w-lg p-8 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
           <form onSubmit={onSubmit} className="space-y-6">
-            <h5 className="text-xl font-medium text-blue-500 text-center dark:text-white">Application Form</h5>
+            <h5 className="text-xl font-medium text-gray-900 text-center dark:text-white">Survey Form</h5>
 
             <div>
               <label htmlFor="fullName" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Full Name</label>
@@ -108,120 +135,142 @@ const FormComponent = () => {
             </div>
 
             <div>
-              <label htmlFor="phoneNumber" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
-              <input
-                type="text"
-                id="phoneNumber"
-                name="phoneNumber"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                value={values.phoneNumber}
-                onChange={handleChange}
-              />
-              {errors.phoneNumber && <p className="text-red-500 text-xs mt-2">{errors.phoneNumber}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="position" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Applying for Position</label>
+              <label htmlFor="surveyTopic" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Survey Topic</label>
               <select
-                id="position"
-                name="position"
+                id="surveyTopic"
+                name="surveyTopic"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                value={values.position}
+                value={values.surveyTopic}
                 onChange={handleChange}
               >
-                <option value="">Select a position</option>
-                <option value="Developer">Developer</option>
-                <option value="Designer">Designer</option>
-                <option value="Manager">Manager</option>
+                <option value="">Select a topic</option>
+                <option value="Technology">Technology</option>
+                <option value="Health">Health</option>
+                <option value="Education">Education</option>
               </select>
-              {errors.position && <p className="text-red-500 text-xs mt-2">{errors.position}</p>}
+              {errors.surveyTopic && <p className="text-red-500 text-xs mt-2">{errors.surveyTopic}</p>}
             </div>
 
-            {(values.position === 'Developer' || values.position === 'Designer') && (
-              <div>
-                <label htmlFor="relevantExperience" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Relevant Experience (Years)</label>
-                <input
-                  type="number"
-                  id="relevantExperience"
-                  name="relevantExperience"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  value={values.relevantExperience}
-                  onChange={handleChange}
-                />
-                {errors.relevantExperience && <p className="text-red-500 text-xs mt-2">{errors.relevantExperience}</p>}
-              </div>
+            {values.surveyTopic === 'Technology' && (
+              <>
+                <div>
+                  <label htmlFor="favoriteProgrammingLanguage" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Favorite Programming Language</label>
+                  <select
+                    id="favoriteProgrammingLanguage"
+                    name="favoriteProgrammingLanguage"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    value={values.favoriteProgrammingLanguage}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select a language</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Python">Python</option>
+                    <option value="Java">Java</option>
+                    <option value="C#">C#</option>
+                  </select>
+                  {errors.favoriteProgrammingLanguage && <p className="text-red-500 text-xs mt-2">{errors.favoriteProgrammingLanguage}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="yearsOfExperience" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Years of Experience</label>
+                  <input
+                    type="number"
+                    id="yearsOfExperience"
+                    name="yearsOfExperience"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    value={values.yearsOfExperience}
+                    onChange={handleChange}
+                  />
+                  {errors.yearsOfExperience && <p className="text-red-500 text-xs mt-2">{errors.yearsOfExperience}</p>}
+                </div>
+              </>
             )}
 
-            {values.position === 'Designer' && (
-              <div>
-                <label htmlFor="portfolioURL" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Portfolio URL</label>
-                <input
-                  type="text"
-                  id="portfolioURL"
-                  name="portfolioURL"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  value={values.portfolioURL}
-                  onChange={handleChange}
-                />
-                {errors.portfolioURL && <p className="text-red-500 text-xs mt-2">{errors.portfolioURL}</p>}
-              </div>
+            {values.surveyTopic === 'Health' && (
+              <>
+                <div>
+                  <label htmlFor="exerciseFrequency" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Exercise Frequency</label>
+                  <select
+                    id="exerciseFrequency"
+                    name="exerciseFrequency"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    value={values.exerciseFrequency}
+                     onChange={handleChange}
+                  >
+                    <option value="">Select frequency</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Rarely">Rarely</option>
+                  </select>
+                  {errors.exerciseFrequency && <p className="text-red-500 text-xs mt-2">{errors.exerciseFrequency}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="dietPreference" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Diet Preference</label>
+                  <select
+                    id="dietPreference"
+                    name="dietPreference"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    value={values.dietPreference}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select diet preference</option>
+                    <option value="Vegetarian">Vegetarian</option>
+                    <option value="Vegan">Vegan</option>
+                    <option value="Non-Vegetarian">Non-Vegetarian</option>
+                  </select>
+                  {errors.dietPreference && <p className="text-red-500 text-xs mt-2">{errors.dietPreference}</p>}
+                </div>
+              </>
             )}
 
-            
+            {values.surveyTopic === 'Education' && (
+              <>
+                <div>
+                  <label htmlFor="highestQualification" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Highest Qualification</label>
+                  <select
+                    id="highestQualification"
+                    name="highestQualification"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    value={values.highestQualification}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select qualification</option>
+                    <option value="High School">High School</option>
+                    <option value="Bachelor's">Bachelor's</option>
+                    <option value="Master's">Master's</option>
+                    <option value="PhD">PhD</option>
+                  </select>
+                  {errors.highestQualification && <p className="text-red-500 text-xs mt-2">{errors.highestQualification}</p>}
+                </div>
 
-            {values.position === 'Manager' && (
-              <div>
-                <label htmlFor="managementExperience" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Management Experience</label>
-                <input
-                  type="text"
-                  id="managementExperience"
-                  name="managementExperience"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  value={values.managementExperience}
-                  onChange={handleChange}
-                 
-                />
-                {errors.managementExperience && <p className="text-red-500 text-xs mt-2">{errors.managementExperience}</p>}
-              </div>
+                <div>
+                  <label htmlFor="fieldOfStudy" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Field of Study</label>
+                  <input
+                    type="text"
+                    id="fieldOfStudy"
+                    name="fieldOfStudy"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    value={values.fieldOfStudy}
+                    onChange={handleChange}
+                  />
+                  {errors.fieldOfStudy && <p className="text-red-500 text-xs mt-2">{errors.fieldOfStudy}</p>}
+                </div>
+              </>
             )}
 
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Additional Skills</label>
-              <div className="flex flex-wrap text-white">
-                {['JavaScript', 'CSS', 'Python'].map((skill) => (
-                  <label key={skill} className="mr-4">
-                    <input
-                      type="checkbox"
-                      name="skills"
-                      value={skill}
-                      checked={values.skills.includes(skill)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFieldValue('skills', [...values.skills, skill]);
-                        } else {
-                          setFieldValue('skills', values.skills.filter((s) => s !== skill));
-                        }
-                      }}
-                    />
-                    {skill}
-                  </label>
-                ))}
-              </div>
-              {errors.skills && <p className="text-red-500 text-xs mt-2">{errors.skills}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="interviewTime" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Preferred Interview Time</label>
-              <input
-                type="datetime-local"
-                id="interviewTime"
-                name="interviewTime"
+              <label htmlFor="feedback" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Feedback</label>
+              <textarea
+                id="feedback"
+                name="feedback"
+                rows="4"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                value={values.interviewTime}
+                value={values.feedback}
                 onChange={handleChange}
-               
               />
-              {errors.interviewTime && <p className="text-red-500 text-xs mt-2">{errors.interviewTime}</p>}
+              {errors.feedback && <p className="text-red-500 text-xs mt-2">{errors.feedback}</p>}
             </div>
 
             <button

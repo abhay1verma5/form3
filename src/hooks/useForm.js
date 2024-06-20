@@ -12,14 +12,13 @@ const useForm = (initialValues, validate) => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e, callback) => {
     e.preventDefault();
     const validationErrors = validate(values);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length === 0) {
-      return true;
+      callback();
     }
-    return false;
   };
 
   const setFieldValue = (field, value) => {
