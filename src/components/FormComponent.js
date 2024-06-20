@@ -73,11 +73,10 @@ const FormComponent = () => {
     // Mock API call for additional questions
     const options = {
       method: 'GET',
-      url: 'https://us-doctors-and-medical-professionals.p.rapidapi.com/search_npi',
-      params: {npi: '1033112214'},
+      url: 'https://current-affairs-of-india.p.rapidapi.com/recent',
       headers: {
         'x-rapidapi-key': '075c7e168cmshe5622bc451e355ap1041f4jsn4c5b4f4bde54',
-        'x-rapidapi-host': 'us-doctors-and-medical-professionals.p.rapidapi.com'
+        'x-rapidapi-host': 'current-affairs-of-india.p.rapidapi.com'
       }
     };
     
