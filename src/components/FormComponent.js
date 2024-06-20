@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import useForm from '../hooks/useForm';
 import SummaryComponent from './SummaryComponent';
 import axios from "axios"
+import Loader from './Loader';
 const FormComponent = () => {
   const validate = (values) => {
     let errors = {};
@@ -68,8 +69,9 @@ const FormComponent = () => {
 
   const [submittedData, setSubmittedData] = useState(null);
   const [additionalQuestions, setAdditionalQuestions] = useState(null);
-
+ const [loading,setloading]=useState(true)
   const fetchAdditionalQuestions = async () => {
+    setloading(false)
     // Mock API call for additional questions
     const options = {
       method: 'GET',
@@ -84,6 +86,7 @@ const FormComponent = () => {
       const response = await axios.request(options);
       setAdditionalQuestions(response.data);
       console.log(response.data);
+      setloading(true)
     } catch (error) {
       console.error(error);
     }
@@ -272,12 +275,13 @@ const FormComponent = () => {
               {errors.feedback && <p className="text-red-500 text-xs mt-2">{errors.feedback}</p>}
             </div>
 
-            <button
+            {loading?<button
               type="submit"
               className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >
               Submit
-            </button>
+            </button>:<Loader className="w-full flex justify-center items-center "/>
+            }
           </form>
         </div>
       )}
