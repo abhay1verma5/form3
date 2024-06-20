@@ -1,15 +1,14 @@
 import { useState } from 'react';
 
-export const useForm = (initialValues, validate) => {
+const useForm = (initialValues, validate) => {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+    const { name, value } = e.target;
     setValues({
       ...values,
-      [name]: newValue,
+      [name]: value,
     });
   };
 
@@ -18,8 +17,16 @@ export const useForm = (initialValues, validate) => {
     const validationErrors = validate(values);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length === 0) {
-      alert(JSON.stringify(values, null, 2));
+      return true;
     }
+    return false;
+  };
+
+  const setFieldValue = (field, value) => {
+    setValues({
+      ...values,
+      [field]: value,
+    });
   };
 
   return {
@@ -27,5 +34,8 @@ export const useForm = (initialValues, validate) => {
     errors,
     handleChange,
     handleSubmit,
+    setFieldValue,
   };
 };
+
+export default useForm;
